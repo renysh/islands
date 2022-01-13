@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 class App extends StatefulWidget {
   const App({Key? key}) : super(key: key);
@@ -31,22 +32,12 @@ class _AppState extends State<App> {
             Expanded(
               child: rows == 0 || columns == 0
                   ? const SizedBox.shrink()
-                  : GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 200,
-                        childAspectRatio: 3 / 2,
-                      ),
-                      itemCount: 10,
-                      itemBuilder: (BuildContext ctx, index) {
-                        return Container(
-                          alignment: Alignment.center,
-                          child: Text('$index'),
-                          decoration: BoxDecoration(
-                              color: Colors.amber,
-                              borderRadius: BorderRadius.circular(15)),
-                        );
-                      }),
+                  : GridView.count(
+                      primary: false,
+                      padding: const EdgeInsets.all(20),
+                      crossAxisCount: columns,
+                      children: generateMatrixData(rows * columns),
+                    ),
             ),
             const SizedBox(
               height: 50,
@@ -56,6 +47,23 @@ class _AppState extends State<App> {
         ),
       ),
     );
+  }
+
+  List<Widget> generateMatrixData(int numberElements) {
+    List<Widget> r = [];
+    for (int i = 0; i < numberElements; i++) {
+      var n = Random().nextInt(2);
+      Widget w = Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.black),
+          color: n == 1 ? Colors.greenAccent : Colors.white,
+        ),
+        child: Center(child: Text('$n')),
+      );
+
+      r.add(w);
+    }
+    return r;
   }
 }
 
