@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+// Unos juntos es isla
+// solo un unico 1 no es isla
+
 class App extends StatefulWidget {
   const App({Key? key}) : super(key: key);
 
@@ -24,10 +27,27 @@ class _AppState extends State<App> {
           children: [
             HeaderControls(
               onPress: (pair) {
-                setState(() {
-                  rows = pair.rows;
-                  columns = pair.columns;
-                });
+                if (pair.valid) {
+                  setState(() {
+                    rows = pair.rows;
+                    columns = pair.columns;
+                  });
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Datos ingresados no validos!'),
+                      duration: const Duration(milliseconds: 1500),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10.0,
+                        vertical: 15,
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                  );
+                }
               },
             ),
             Expanded(
@@ -62,7 +82,7 @@ class _AppState extends State<App> {
     List<Widget> ret = [];
     List<List<int>> m = [];
 
-    List<int> aux = [
+    /*List<int> aux = [
       0,
       0,
       1,
@@ -88,7 +108,7 @@ class _AppState extends State<App> {
       1,
       0,
       0
-    ];
+    ];*/
 
     List<int> f = [];
     /*for (var i = 1; i <= aux.length; i++) {
@@ -723,14 +743,25 @@ class _HeaderControlsState extends State<HeaderControls> {
               ],
             ),
           ),
+          const SizedBox(
+            height: 10,
+          ),
           Expanded(
             flex: 2,
             child: ElevatedButton(
               onPressed: () {
                 widget.onPress(
                   PairData(
-                    rows: int.parse(_rowsController.text),
-                    columns: int.parse(_columnsController.text),
+                    valid: _rowsController.text.isNotEmpty &&
+                        _columnsController.text.isNotEmpty &&
+                        int.parse(_rowsController.text) > 0 &&
+                        int.parse(_columnsController.text) > 0,
+                    rows: _rowsController.text.isEmpty
+                        ? 0
+                        : int.parse(_rowsController.text),
+                    columns: _columnsController.text.isEmpty
+                        ? 0
+                        : int.parse(_columnsController.text),
                   ),
                 );
               },
@@ -753,8 +784,9 @@ class _HeaderControlsState extends State<HeaderControls> {
 class PairData {
   final int rows;
   final int columns;
+  final bool valid;
 
-  PairData({required this.rows, required this.columns});
+  PairData({required this.rows, required this.columns, required this.valid});
 
   @override
   String toString() {
