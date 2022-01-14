@@ -15,6 +15,7 @@ class _AppState extends State<App> {
   int rows = 0;
   int columns = 0;
   int numberIslands = 0;
+  List<int> matrixValues = [];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,12 +27,14 @@ class _AppState extends State<App> {
         child: Column(
           children: [
             HeaderControls(
-              onPress: (pair) {
+              onPress: (pair) async {
                 if (pair.valid) {
                   setState(() {
                     rows = pair.rows;
                     columns = pair.columns;
                   });
+                  await generateRandoms(rows * columns);
+                  generateMatrixData(rows, columns);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -53,12 +56,43 @@ class _AppState extends State<App> {
             Expanded(
               child: rows == 0 || columns == 0
                   ? const SizedBox.shrink()
-                  : GridView.count(
+                  : GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columns,
+                      ),
                       primary: false,
                       padding: const EdgeInsets.all(20),
-                      crossAxisCount: columns,
-                      children: generateMatrixData(rows, columns),
-                    ),
+                      itemCount: columns * rows,
+                      /*itemBuilder: (BuildContext context, int index) {
+                        return ret[index];
+                      },*/
+                      itemBuilder: (BuildContext context, int index) {
+                        return GestureDetector(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.black),
+                              color: matrixValues[index] == 1
+                                  ? Colors.greenAccent
+                                  : Colors.white,
+                            ),
+                            child:
+                                Center(child: Text('${matrixValues[index]}')),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              if (matrixValues[index] == 0) {
+                                matrixValues[index] = 1;
+                              } else {
+                                matrixValues[index] = 0;
+                              }
+                              generateMatrixData(rows, columns);
+                            });
+                          },
+                        );
+                      }
+
+                      //children: generateMatrixData(rows, columns),
+                      ),
             ),
             SizedBox(
               height: 50,
@@ -78,8 +112,18 @@ class _AppState extends State<App> {
     );
   }
 
-  List<Widget> generateMatrixData(int rows, int columns) {
-    List<Widget> ret = [];
+  generateRandoms(int numberElements) async {
+    List<int> values = [];
+    for (int i = 1; i <= numberElements; i++) {
+      var n = Random().nextInt(2);
+      values.add(n);
+    }
+    setState(() {
+      matrixValues = values;
+    });
+  }
+
+  generateMatrixData(int rows, int columns) {
     List<List<int>> m = [];
 
     /*List<int> aux = [
@@ -130,21 +174,12 @@ class _AppState extends State<App> {
 
     //print(m);
 
-    for (int i = 1; i <= rows * columns; i++) {
-      var n = Random().nextInt(2);
-      f.add(n);
+    for (int i = 1; i <= matrixValues.length; i++) {
+      f.add(matrixValues[i - 1]);
       if (i % columns == 0) {
         m.add(f);
         f = [];
       }
-      Widget w = Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.black),
-          color: n == 1 ? Colors.greenAccent : Colors.white,
-        ),
-        child: Center(child: Text('$n')),
-      );
-      ret.add(w);
     }
 
     List<List<Block>> matrixVerify = [];
@@ -449,8 +484,6 @@ class _AppState extends State<App> {
     setState(() {
       numberIslands = counterIslands;
     });
-
-    return ret;
   }
 
   int countOccurrences(List<int> list, int element) {
@@ -463,27 +496,31 @@ class _AppState extends State<App> {
   }
 
   List<List<Block>> transpuesta(List<List<Block>> base) {
-    // generar matriz vacia;
-    int numberColumns = base[0].length;
-    int numberRows = base.length;
+    if (base.isNotEmpty) {
+      // generar matriz vacia;
+      int numberColumns = base[0].length;
+      int numberRows = base.length;
 
-    List<List<Block>> ret = [];
+      List<List<Block>> ret = [];
 
-    for (int i = 0; i < numberColumns; i++) {
-      List<Block> _row = [];
-      for (int j = 0; j < numberRows; j++) {
-        _row.add(Block());
+      for (int i = 0; i < numberColumns; i++) {
+        List<Block> _row = [];
+        for (int j = 0; j < numberRows; j++) {
+          _row.add(Block());
+        }
+        ret.add(_row);
       }
-      ret.add(_row);
-    }
 
-    for (int i = 0; i < base.length; i++) {
-      for (int j = 0; j < base[i].length; j++) {
-        ret[j][i] = base[i][j];
+      for (int i = 0; i < base.length; i++) {
+        for (int j = 0; j < base[i].length; j++) {
+          ret[j][i] = base[i][j];
+        }
       }
-    }
 
-    return ret;
+      return ret;
+    } else {
+      return [];
+    }
   }
 
   List<List<Block>> verify(List<List<Block>> list) {
