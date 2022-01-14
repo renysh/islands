@@ -11,6 +11,7 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   int rows = 0;
   int columns = 0;
+  int numberIslands = 0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,9 +40,17 @@ class _AppState extends State<App> {
                       children: generateMatrixData(rows, columns),
                     ),
             ),
-            const SizedBox(
+            SizedBox(
               height: 50,
-              child: Placeholder(),
+              child: Center(
+                child: Text(
+                  'ISLAS: ${numberIslands.toString()}',
+                  style: const TextStyle(
+                    fontSize: 50,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -53,7 +62,54 @@ class _AppState extends State<App> {
     List<Widget> ret = [];
     List<List<int>> m = [];
 
+    List<int> aux = [
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0
+    ];
+
     List<int> f = [];
+    /*for (var i = 1; i <= aux.length; i++) {
+      //print(aux[i]);
+      f.add(aux[i - 1]);
+      if (i % columns == 0) {
+        m.add(f);
+        f = [];
+      }
+      Widget w = Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.black),
+          color: aux[i - 1] == 1 ? Colors.greenAccent : Colors.white,
+        ),
+        child: Center(child: Text('${aux[i - 1]}')),
+      );
+      ret.add(w);
+    }*/
+
+    //print(m);
+
     for (int i = 1; i <= rows * columns; i++) {
       var n = Random().nextInt(2);
       f.add(n);
@@ -253,10 +309,10 @@ class _AppState extends State<App> {
       matrixVerify.add(rb);
     }
 
-    print(matrixVerify);
+    // print(matrixVerify);
 
     int counter = 1;
-
+    // de izquierda a derecha
     for (int i = 0; i < matrixVerify.length; i++) {
       List<Block> row = matrixVerify[i];
       for (int j = 0; j < row.length; j++) {
@@ -265,31 +321,349 @@ class _AppState extends State<App> {
             blk.right as bool ||
             blk.top as bool ||
             blk.bottom as bool) {
-          print('[$i,$j] => true');
+          if (matrixVerify[i][j].islandNumber == null) {
+            matrixVerify[i][j].islandNumber = counter;
+            counter++;
+          }
 
-          matrixVerify[i][j].islandNumber = counter;
+          // matrixVerify[i][j].islandNumber = counter;
 
           if (blk.left as bool) {
-            matrixVerify[i][j - 1].islandNumber = counter;
+            if (matrixVerify[i][j - 1].islandNumber == null) {
+              matrixVerify[i][j - 1].islandNumber =
+                  matrixVerify[i][j].islandNumber;
+            } else {
+              matrixVerify[i][j].islandNumber =
+                  matrixVerify[i][j - 1].islandNumber;
+            }
           }
           if (blk.right as bool) {
-            matrixVerify[i][j + 1].islandNumber = counter;
+            if (matrixVerify[i][j + 1].islandNumber == null) {
+              matrixVerify[i][j + 1].islandNumber =
+                  matrixVerify[i][j].islandNumber;
+            } else {
+              matrixVerify[i][j].islandNumber =
+                  matrixVerify[i][j + 1].islandNumber;
+            }
           }
           if (blk.top as bool) {
-            matrixVerify[i - 1][j].islandNumber = counter;
+            if (matrixVerify[i - 1][j].islandNumber == null) {
+              matrixVerify[i - 1][j].islandNumber =
+                  matrixVerify[i][j].islandNumber;
+            } else {
+              matrixVerify[i][j].islandNumber =
+                  matrixVerify[i - 1][j].islandNumber;
+            }
           }
           if (blk.bottom as bool) {
-            matrixVerify[i + 1][j].islandNumber = counter;
+            if (matrixVerify[i + 1][j].islandNumber == null) {
+              matrixVerify[i + 1][j].islandNumber =
+                  matrixVerify[i][j].islandNumber;
+            } else {
+              matrixVerify[i][j].islandNumber =
+                  matrixVerify[i + 1][j].islandNumber;
+            }
           }
+        } else {
+          counter++;
+          matrixVerify[i][j].islandNumber = counter;
+          counter++;
         }
       }
     }
 
-    print(matrixVerify);
+    // print('----------------');
 
-    //TODO incrementar el contador y luego sumar los que tengan mas de 1 bloque y sacar el numero de islas
+    // print(transpuesta(matrixVerify));
+
+    List<List<Block>> t1 = transpuesta(matrixVerify);
+    t1 = verify(verifySidesTrans(t1));
+
+    List<List<Block>> t2 = transpuesta(t1);
+    t2 = verify(verifySidesTrans(t2));
+
+    List<List<Block>> t3 = transpuesta(t2);
+    t3 = verify(verifySidesTrans(t3));
+
+    List<List<Block>> t4 = transpuesta(t3);
+    t4 = verify(verifySidesTrans(t4));
+
+    // barrer de derecha a izquierda casos en los que los 1 estan en las primeras columnas y los 1 de la anterior fila estan en las ultimas columnas
+    /*for (int i = 0; i < matrixVerify.length; i++) {
+      List<Block> row = matrixVerify[i];
+      for (int j = row.length - 1; 0 <= j; j--) {
+        print(row[j].islandNumber);
+        Block blk = row[j];
+        if (blk.bottom as bool) {
+          matrixVerify[i + 1][j].islandNumber = matrixVerify[i][j].islandNumber;
+        }
+        if (blk.left as bool) {
+          matrixVerify[i][j - 1].islandNumber = matrixVerify[i][j].islandNumber;
+        }
+        if (blk.right as bool) {
+          matrixVerify[i][j + 1].islandNumber = matrixVerify[i][j].islandNumber;
+        }
+        if (blk.top as bool) {
+          matrixVerify[i - 1][j].islandNumber = matrixVerify[i][j].islandNumber;
+        }
+      }
+    }*/
+    // incrementar el contador y luego sumar los que tengan mas de 1 bloque y sacar el numero de islas
+    List<int> finalList = [];
+    for (int i = 0; i < t4.length; i++) {
+      for (var j = 0; j < t4[i].length; j++) {
+        finalList.add(t4[i][j].islandNumber as int);
+      }
+    }
+    // print(finalList);
+
+    int counterIslands = 0;
+    List<int> distincts = finalList.toSet().toList();
+    for (int i = 0; i < distincts.length; i++) {
+      if (countOccurrences(finalList, distincts[i]) > 1) {
+        counterIslands++;
+      }
+    }
+    // print('NUMERO DE ISLAS: $counterIslands');
+
+    setState(() {
+      numberIslands = counterIslands;
+    });
 
     return ret;
+  }
+
+  int countOccurrences(List<int> list, int element) {
+    if (list.isEmpty) {
+      return 0;
+    }
+
+    var foundElements = list.where((e) => e == element);
+    return foundElements.length;
+  }
+
+  List<List<Block>> transpuesta(List<List<Block>> base) {
+    // generar matriz vacia;
+    int numberColumns = base[0].length;
+    int numberRows = base.length;
+
+    List<List<Block>> ret = [];
+
+    for (int i = 0; i < numberColumns; i++) {
+      List<Block> _row = [];
+      for (int j = 0; j < numberRows; j++) {
+        _row.add(Block());
+      }
+      ret.add(_row);
+    }
+
+    for (int i = 0; i < base.length; i++) {
+      for (int j = 0; j < base[i].length; j++) {
+        ret[j][i] = base[i][j];
+      }
+    }
+
+    return ret;
+  }
+
+  List<List<Block>> verify(List<List<Block>> list) {
+    for (int i = 0; i < list.length; i++) {
+      List<Block> row = list[i];
+      for (int j = row.length - 1; 0 <= j; j--) {
+        Block blk = row[j];
+        if (blk.bottom as bool) {
+          list[i + 1][j].islandNumber = list[i][j].islandNumber;
+        }
+        if (blk.left as bool) {
+          list[i][j - 1].islandNumber = list[i][j].islandNumber;
+        }
+        if (blk.right as bool) {
+          list[i][j + 1].islandNumber = list[i][j].islandNumber;
+        }
+        if (blk.top as bool) {
+          list[i - 1][j].islandNumber = list[i][j].islandNumber;
+        }
+      }
+    }
+    return list;
+  }
+
+  verifySidesTrans(List<List<Block>> matrix) {
+    for (int i = 0; i < matrix.length; i++) {
+      List<Block> row = matrix[i];
+      for (int j = 0; j < row.length; j++) {
+        int currentNumber = int.parse(matrix[i][j].label as String);
+        //evaluar los 1->tierra
+        if (currentNumber == 1) {
+          if (i == 0) {
+            //primera fila
+            if (j == 0) {
+              //primera columna
+              matrix[i][j].reinit();
+              //obtener el de la derecha
+              int r = int.parse(matrix[i][j + 1].label as String);
+              if (r == 1) {
+                matrix[i][j].right = true;
+              }
+              //obtener el de abajo
+              int b = int.parse(matrix[i + 1][j].label as String);
+              if (b == 1) {
+                matrix[i][j].bottom = true;
+              }
+            } else if (j == row.length - 1) {
+              //ultima columna
+              matrix[i][j].reinit();
+              //obtener el de la izquierda
+              int l = int.parse(matrix[i][j - 1].label as String);
+              if (l == 1) {
+                matrix[i][j].left = true;
+              }
+              //obtener el de abajo
+              int b = int.parse(matrix[i + 1][j].label as String);
+              if (b == 1) {
+                matrix[i][j].bottom = true;
+              }
+            } else {
+              //otras columnas
+              matrix[i][j].reinit();
+              //obtener el de la izquierda
+              int l = int.parse(matrix[i][j - 1].label as String);
+              int r = int.parse(matrix[i][j + 1].label as String);
+              int b = int.parse(matrix[i + 1][j].label as String);
+
+              if (l == 1) {
+                matrix[i][j].left = true;
+              }
+              if (b == 1) {
+                matrix[i][j].bottom = true;
+              }
+              if (r == 1) {
+                matrix[i][j].right = true;
+              }
+            }
+          } else if (i == matrix.length - 1) {
+            //ultima fila
+            if (j == 0) {
+              //primera columna
+              matrix[i][j].reinit();
+              //obtener el de la derecha
+              int r = int.parse(matrix[i][j + 1].label as String);
+              if (r == 1) {
+                matrix[i][j].right = true;
+              }
+              //obtener el de arriba
+              int t = int.parse(matrix[i - 1][j].label as String);
+              if (t == 1) {
+                matrix[i][j].top = true;
+              }
+            } else if (j == row.length - 1) {
+              //ultima columna
+              matrix[i][j].reinit();
+              //obtener el de la izquierda
+              int l = int.parse(matrix[i][j - 1].label as String);
+              if (l == 1) {
+                matrix[i][j].left = true;
+              }
+              //obtener el de arriba
+              int t = int.parse(matrix[i - 1][j].label as String);
+              if (t == 1) {
+                matrix[i][j].top = true;
+              }
+            } else {
+              //otras columnas
+              matrix[i][j].reinit();
+              //obtener el de la izquierda
+              int l = int.parse(matrix[i][j - 1].label as String);
+              int r = int.parse(matrix[i][j + 1].label as String);
+              int t = int.parse(matrix[i - 1][j].label as String);
+
+              if (l == 1) {
+                matrix[i][j].left = true;
+              }
+              if (t == 1) {
+                matrix[i][j].top = true;
+              }
+              if (r == 1) {
+                matrix[i][j].right = true;
+              }
+            }
+          } else {
+            //otras filas
+            if (j == 0) {
+              //primera columna
+              matrix[i][j].reinit();
+              //obtener el de la arriba
+              int t = int.parse(matrix[i - 1][j].label as String);
+              //derecha
+              int r = int.parse(matrix[i][j + 1].label as String);
+              //abajo
+              int b = int.parse(matrix[i + 1][j].label as String);
+
+              if (t == 1) {
+                matrix[i][j].top = true;
+              }
+
+              if (r == 1) {
+                matrix[i][j].right = true;
+              }
+
+              if (b == 1) {
+                matrix[i][j].bottom = true;
+              }
+            } else if (j == row.length - 1) {
+              //ultima columna
+              matrix[i][j].reinit();
+              //obtener el de la arriba
+              int t = int.parse(matrix[i - 1][j].label as String);
+              //izquierda
+              int l = int.parse(matrix[i][j - 1].label as String);
+              //abajo
+              int b = int.parse(matrix[i + 1][j].label as String);
+
+              if (t == 1) {
+                matrix[i][j].top = true;
+              }
+
+              if (l == 1) {
+                matrix[i][j].left = true;
+              }
+
+              if (b == 1) {
+                matrix[i][j].bottom = true;
+              }
+            } else {
+              //otras columnas
+              matrix[i][j].reinit();
+              //obtener el de la arriba
+              int t = int.parse(matrix[i - 1][j].label as String);
+              //izquierda
+              int l = int.parse(matrix[i][j - 1].label as String);
+              //derecha
+              int r = int.parse(matrix[i][j + 1].label as String);
+              //abajo
+              int b = int.parse(matrix[i + 1][j].label as String);
+
+              if (t == 1) {
+                matrix[i][j].top = true;
+              }
+
+              if (l == 1) {
+                matrix[i][j].left = true;
+              }
+
+              if (b == 1) {
+                matrix[i][j].bottom = true;
+              }
+
+              if (r == 1) {
+                matrix[i][j].right = true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return matrix;
   }
 }
 
